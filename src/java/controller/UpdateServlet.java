@@ -76,8 +76,6 @@ public class UpdateServlet extends HttpServlet {
                 return;
             }
             
-            // Set CSS file for the page
-            request.setAttribute("cssfile", "crud.css");
             request.setAttribute("product", product);
             request.setAttribute("categories", categories);
             request.getRequestDispatcher(UPDATE_JSP).forward(request, response);
@@ -125,8 +123,10 @@ public class UpdateServlet extends HttpServlet {
         // Validate required fields
         if (id == null || name == null || image == null || priceRaw == null || 
             description == null || categoryIdRaw == null || releaseDate == null || ratingRaw == null ||
-            id.trim().isEmpty() || name.trim().isEmpty() || priceRaw.trim().isEmpty() || 
-            categoryIdRaw.trim().isEmpty()) {
+            id.trim().isEmpty() || name.trim().isEmpty() || image.trim().isEmpty()
+            || priceRaw.trim().isEmpty() || description.trim().isEmpty()
+            || categoryIdRaw.trim().isEmpty() || releaseDate.trim().isEmpty()
+            || ratingRaw.trim().isEmpty()) {
             
             request.setAttribute("errorMessage", "All fields are required");
             doGet(request, response);

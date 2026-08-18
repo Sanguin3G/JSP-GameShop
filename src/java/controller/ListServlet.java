@@ -85,9 +85,7 @@ public class ListServlet extends HttpServlet {
             int totalProducts = allProducts.size();
             int totalPages = (totalProducts + productsPerPage - 1) / productsPerPage;
             
-            if (page > totalPages && totalPages > 0) {
-                page = totalPages;
-            }
+            page = HomeServlet.safePage(pageParam, totalPages);
             
             int start = (page - 1) * productsPerPage;
             int end = Math.min(page * productsPerPage, totalProducts);
@@ -99,9 +97,6 @@ public class ListServlet extends HttpServlet {
             request.setAttribute("categories", categories);
             request.setAttribute("page", page);
             request.setAttribute("totalPages", totalPages);
-            
-            // Set CSS file for the page
-            request.setAttribute("cssfile", "list.css");
             
             // Forward to list page
             request.getRequestDispatcher(LIST_JSP).forward(request, response);

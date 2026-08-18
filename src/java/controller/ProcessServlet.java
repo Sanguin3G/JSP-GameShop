@@ -63,6 +63,12 @@ public class ProcessServlet extends HttpServlet {
         try {
             int id = Integer.parseInt(idRaw);
             int num = Integer.parseInt(numRaw.trim());
+
+            if (num != -1 && num != 1) {
+                LOGGER.log(Level.WARNING, "Unsupported cart adjustment: {0}", num);
+                response.sendRedirect(CART_JSP);
+                return;
+            }
             
             // Handle item removal if quantity becomes zero or negative
             if ((num == -1) && (cart.getQuantityByID(id) <= 1)) {

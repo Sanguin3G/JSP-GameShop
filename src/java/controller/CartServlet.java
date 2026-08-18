@@ -47,9 +47,6 @@ public class CartServlet extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8");
         request.setCharacterEncoding("utf-8");
         
-        // Set CSS file for the page
-        request.setAttribute("cssfile", "cart.css");
-        
         // Forward to cart page
         request.getRequestDispatcher(CART_JSP).forward(request, response);
     }

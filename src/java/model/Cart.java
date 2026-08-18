@@ -64,8 +64,8 @@ public class Cart {
     }
 
     // Calculate total money using streams
-    public float getTotalMoney() {
-        return (float) items.stream()
+    public double getTotalMoney() {
+        return items.stream()
                 .mapToDouble(item -> item.getQuantity() * item.getProduct().getPrice())
                 .sum();
     }

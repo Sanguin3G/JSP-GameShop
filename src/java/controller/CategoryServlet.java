@@ -84,9 +84,7 @@ public class CategoryServlet extends HttpServlet {
             int totalProducts = products.size();
             int totalPages = (totalProducts + productsPerPage - 1) / productsPerPage;
             
-            if (page > totalPages && totalPages > 0) {
-                page = totalPages;
-            }
+            page = HomeServlet.safePage(pageParam, totalPages);
             
             int start = (page - 1) * productsPerPage;
             int end = Math.min(page * productsPerPage, totalProducts);
@@ -106,12 +104,9 @@ public class CategoryServlet extends HttpServlet {
             request.setAttribute("categories", categories);
             request.setAttribute("products", paginatedProducts);
             request.setAttribute("currentCategory", currentCategory);
-            request.setAttribute("tag", categoryId); // For highlighting active category
+            request.setAttribute("tag", Integer.parseInt(categoryId)); // For highlighting active category
             request.setAttribute("page", page);
             request.setAttribute("totalPages", totalPages);
-            
-            // Set CSS file for the page
-            request.setAttribute("cssfile", "home.css");
             
             // Forward to home page with filtered products
             request.getRequestDispatcher(HOME_JSP).forward(request, response);

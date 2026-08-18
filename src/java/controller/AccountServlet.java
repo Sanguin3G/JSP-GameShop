@@ -46,22 +46,19 @@ public class AccountServlet extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8");
         request.setCharacterEncoding("utf-8");
         
-        // Check if user is admin
         HttpSession session = request.getSession();
         Account account = (Account) session.getAttribute(SESSION_ACCOUNT_KEY);
         
-        if (account == null || account.getAdminLevel() != ADMIN_LEVEL) {
-            LOGGER.log(Level.WARNING, "Unauthorized access attempt to account management");
-            response.sendRedirect(HOME_SERVLET);
+        if (account == null) {
+            response.sendRedirect("login");
             return;
         }
         
         try (DAO dao = new DAO()) {
-            // Get all accounts
-            List<Account> accounts = dao.getAllAccounts();
+            List<Account> accounts = account.getAdminLevel() == ADMIN_LEVEL
+                    ? dao.getAllAccounts() : java.util.Collections.singletonList(account);
             
             // Set CSS file for the page
-            request.setAttribute("cssfile", "crud.css");
             request.setAttribute("accounts", accounts);
             
             // Get page parameters for pagination
@@ -83,9 +80,7 @@ public class AccountServlet extends HttpServlet {
             int totalAccounts = accounts.size();
             int totalPages = (totalAccounts + accountsPerPage - 1) / accountsPerPage;
             
-            if (page > totalPages && totalPages > 0) {
-                page = totalPages;
-            }
+            page = HomeServlet.safePage(pageParam, totalPages);
             
             int start = (page - 1) * accountsPerPage;
             int end = Math.min(page * accountsPerPage, totalAccounts);

@@ -49,9 +49,6 @@ public class LoginServlet extends HttpServlet {
             return;
         }
         
-        // Set CSS file for the page
-        request.setAttribute("cssfile", "login.css");
-        
         // Forward to login page
         request.getRequestDispatcher("login.jsp").forward(request, response);
     }

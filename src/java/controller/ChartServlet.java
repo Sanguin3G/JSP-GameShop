@@ -6,7 +6,10 @@
 package controller;
 
 import dal.DAO;
+import com.google.gson.Gson;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -69,9 +72,10 @@ public class ChartServlet extends HttpServlet {
             List<Category> categories = dao.getAllCategory();
             
             // Set CSS file for the page
-            request.setAttribute("cssfile", "crud.css");
             request.setAttribute("topProducts", topProducts);
             request.setAttribute("topRatedProducts", topRatedProducts);
+            request.setAttribute("topProductsJson", toChartRows(topProducts, true));
+            request.setAttribute("topRatedProductsJson", toChartRows(topRatedProducts, false));
             request.setAttribute("categories", categories);
             
             // Forward to chart page
@@ -106,5 +110,13 @@ public class ChartServlet extends HttpServlet {
     @Override
     public String getServletInfo() {
         return "Chart Display Servlet for GameStore";
+    }
+
+    private String toChartRows(List<Product> products, boolean usePrice) {
+        List<List<Object>> rows = new ArrayList<>();
+        for (Product product : products) {
+            rows.add(Arrays.asList(product.getName(), usePrice ? product.getPrice() : product.getRating()));
+        }
+        return new Gson().toJson(rows);
     }
 }

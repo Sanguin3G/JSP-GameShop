@@ -57,6 +57,9 @@ public class UpdateAccServlet extends HttpServlet {
         }
         
         String accountId = request.getParameter("aid");
+        if (accountId == null || accountId.trim().isEmpty()) {
+            accountId = String.valueOf(account.getId());
+        }
         
         // Validate account ID
         if (accountId == null || accountId.trim().isEmpty()) {
@@ -75,8 +78,6 @@ public class UpdateAccServlet extends HttpServlet {
                 return;
             }
             
-            // Set CSS file for the page
-            request.setAttribute("cssfile", "crud.css");
             request.setAttribute("account", targetAccount);
             
             // Forward to account update page
@@ -115,6 +116,9 @@ public class UpdateAccServlet extends HttpServlet {
         
         String accountIdRaw = request.getParameter("aid");
         String username = request.getParameter("username");
+        if (username == null) {
+            username = request.getParameter("user");
+        }
         String password = request.getParameter("pass");
         String adminLevelRaw = request.getParameter("admin");
         
@@ -149,6 +153,12 @@ public class UpdateAccServlet extends HttpServlet {
             try (DAO dao = new DAO()) {
                 // Update the account
                 dao.updateAcc(username, password, adminLevel, accountId);
+                if (account.getId() == accountId) {
+                    account.setUsername(username);
+                    account.setPass(password);
+                    account.setAdminLevel(adminLevel);
+                    session.setAttribute(SESSION_ACCOUNT_KEY, account);
+                }
                 LOGGER.log(Level.INFO, "Account updated successfully: {0}", accountId);
                 
                 // Redirect back to account list
