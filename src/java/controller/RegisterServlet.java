@@ -40,8 +40,6 @@ public class RegisterServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        // Set CSS file for the page
-        request.setAttribute("cssfile", "register.css");
         request.getRequestDispatcher(REGISTER_JSP).forward(request, response);
     }
 
@@ -109,7 +107,7 @@ public class RegisterServlet extends HttpServlet {
             dao.signup(username, password);
             LOGGER.log(Level.INFO, "New user registered: {0}", username);
             
-            // Redirect to login page with success message
+            // Redirect to login page with a one-time success message
             request.getSession().setAttribute("registrationSuccess", "Account created successfully! Please log in.");
             response.sendRedirect(LOGIN_PAGE);
             

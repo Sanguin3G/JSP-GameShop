@@ -78,7 +78,7 @@ public class PurchaseServlet extends HttpServlet {
             session.setAttribute("size", 0);
             
             // Set success message
-            request.setAttribute("successMessage", "Your purchase has been completed successfully!");
+            session.setAttribute("successMessage", "Order placed. Your games are now officially someone else’s problem.");
             
             // Redirect to home page
             response.sendRedirect(HOME_SERVLET);

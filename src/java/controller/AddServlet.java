@@ -63,7 +63,6 @@ public class AddServlet extends HttpServlet {
             List<Category> categories = dao.getAllCategory();
             
             // Set CSS file for the page
-            request.setAttribute("cssfile", "crud.css");
             request.setAttribute("categories", categories);
             
             // Forward to add product page
@@ -111,7 +110,9 @@ public class AddServlet extends HttpServlet {
         // Validate required fields
         if (name == null || image == null || priceRaw == null || 
             description == null || categoryIdRaw == null || releaseDate == null || ratingRaw == null ||
-            name.trim().isEmpty() || priceRaw.trim().isEmpty() || categoryIdRaw.trim().isEmpty()) {
+            name.trim().isEmpty() || image.trim().isEmpty() || description.trim().isEmpty()
+                || priceRaw.trim().isEmpty() || categoryIdRaw.trim().isEmpty()
+                || releaseDate.trim().isEmpty() || ratingRaw.trim().isEmpty()) {
             
             request.setAttribute("errorMessage", "All fields are required");
             doGet(request, response);

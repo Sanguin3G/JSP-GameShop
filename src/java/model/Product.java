@@ -6,9 +6,11 @@
 package model;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
 public class Product {
+    private static final DateTimeFormatter INPUT_DATE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
     private int id;
     private String name;
     private String slug;
@@ -91,13 +93,16 @@ public class Product {
             return null;
         }
         try {
-            String[] parts = date.split("/");
-            if (parts.length == 3) {
-                int day = Integer.parseInt(parts[0]);
-                int month = Integer.parseInt(parts[1]);
-                int year = Integer.parseInt(parts[2]);
-                return LocalDate.of(year, month, day);
+            if (date.contains("/")) {
+                String[] parts = date.split("/");
+                if (parts.length == 3) {
+                    int day = Integer.parseInt(parts[0]);
+                    int month = Integer.parseInt(parts[1]);
+                    int year = Integer.parseInt(parts[2]);
+                    return LocalDate.of(year, month, day);
+                }
             }
+            return LocalDate.parse(date, INPUT_DATE_FORMAT);
         } catch (Exception e) {
             // If parsing fails, return null
         }
@@ -224,6 +229,11 @@ public class Product {
             releaseDate.getDayOfMonth(), 
             releaseDate.getMonthValue(),
             releaseDate.getYear());
+    }
+
+    /** Value expected by an HTML input[type=date]. */
+    public String getReleaseDateInput() {
+        return releaseDate == null ? "" : releaseDate.format(INPUT_DATE_FORMAT);
     }
     
     // For backward compatibility

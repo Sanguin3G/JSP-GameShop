@@ -1,101 +1,102 @@
-# JSP Game Store
+# GameShop
 
-A Java web application for an online game store built using JSP, Servlets, and Maven.
+GameShop is a deliberately old-school Java web store: JSP pages, Jakarta Servlets, a small DAO layer, and Maven packaging a WAR for Tomcat. The refresh keeps that shape, but makes the application easier to run and less internally contradictory.
 
-## Features
+## What is included
 
-*   User authentication (login/logout)
-*   Product catalog browsing
-*   Shopping cart functionality
-*   Administrator panel for product management
-*   Secure password handling
-*   Responsive design using Bootstrap
+- Browse, search, and filter a seeded game catalog
+- Product detail pages with related games
+- Session shopping cart with quantity controls
+- Demo checkout that writes orders and order items to SQLite
+- Registration, login, logout, and account management
+- Admin-only catalog editing, account management, and price/rating charts
+- A warm paper-style light UI with Bootstrap 5.3.2 and a small shared stylesheet
 
-## Tech Stack
+## Stack
 
-*   **Backend:** Java 11, Jakarta Servlets 5.0, JSP 3.0
-*   **Frontend:** HTML, CSS, JavaScript, Bootstrap 5.3.2 (via WebJars)
-*   **Database:** PostgreSQL
-*   **Build Tool:** Apache Maven
-*   **Server:** Apache Tomcat 10.x
+- Java 11
+- Jakarta Servlet 5 / JSP 3 / JSTL 2
+- Apache Maven
+- Apache Tomcat 10.x
+- SQLite through the Xerial JDBC driver
+- Bootstrap 5.3.2, loaded from the existing WebJars dependency and CDN stylesheet/script links
 
-## Project Structure
+## Project layout
 
-```
+```text
 .
-├── src/java/           # Java source files (Servlets, DAL, Models)
-├── web/                # Web resources (JSP, CSS, static files)
-│   ├── META-INF/
-│   │   └── context.xml # Tomcat context configuration
-│   ├── WEB-INF/
-│   │   └── web.xml     # Deployment descriptor
-│   ├── common/         # Reusable JSP fragments (header, footer)
-│   ├── css/            # Stylesheets
-│   └── error/          # Error pages (404, 500)
-├── GameStore_postgres.sql # Database schema and initial data
-├── pom.xml             # Maven project configuration
-└── README.md
+├── pom.xml
+├── src/
+│   ├── java/
+│   │   ├── controller/       # Jakarta Servlets
+│   │   ├── dal/              # SQLite connection and DAO
+│   │   └── model/            # Catalog, account, cart, and item models
+│   └── resources/
+│       └── GameStore_sqlite.sql  # Schema and realistic demo seed data
+└── web/
+    ├── WEB-INF/web.xml       # WAR descriptor and session settings
+    ├── META-INF/context.xml  # Minimal Tomcat context; no server-side DB pool
+    ├── common/               # Shared JSP head/scripts
+    ├── css/common.css        # Shared paper-toned theme
+    └── *.jsp                 # Legacy JSP views
 ```
 
-## Setup and Deployment
+The old PostgreSQL dump, unused order model classes, missing page-specific stylesheets, and unused `changeinfo.jsp` notification page were removed. Orders are still stored, but the current UI intentionally keeps checkout as a simple demo purchase flow rather than pretending to be a full payment platform.
 
-### Prerequisites
+## Preview
 
-*   JDK 11
-*   Apache Maven 3.6+
-*   Apache Tomcat 10.x
-*   PostgreSQL
+![GameShop home page](docs/screenshots/gameshop-home.png)
 
-### 1. Database Setup
+## Run locally
 
-1.  Ensure PostgreSQL is installed and running.
-2.  Create a new database named `GameStore`.
-3.  Execute the `GameStore_postgres.sql` script to create the necessary tables and seed initial data.
+### Requirements
 
-### 2. Configuration
+- JDK 11
+- Maven 3.6+
+- Tomcat 10.x
 
-This project is configured to use a database connection pool defined in `web/META-INF/context.xml`. The connection pool is automatically configured when you deploy the application.
+No PostgreSQL installation or database setup is required. On the first database access, `DBContext` creates `GameStore.db` in the application’s working directory and executes `src/resources/GameStore_sqlite.sql`. The database file is ignored by Git.
 
-#### Database Connection Pool
+To use another location, pass a SQLite JDBC URL when starting Tomcat:
 
-The database connection pool is pre-configured in `web/META-INF/context.xml` with the following default settings:
+```text
+-Dgamestore.db.url=jdbc:sqlite:C:/path/to/GameStore.db
+```
 
-- **Database:** `GameStore` on `localhost:5432`
-- **Username:** `postgres`
-- **Password:** `postgres`
-
-If your PostgreSQL setup differs from these defaults, edit the `web/META-INF/context.xml` file and update the `username`, `password`, and `url` attributes in the `<Resource>` element.
-
-#### Fallback Direct Connection
-
-If the connection pool is not available, the application will fall back to a direct database connection. The credentials for this fallback connection are located in `src/java/dal/DBContext.java`.
-
-### 3. Build the Project
-
-Use Maven to build the project. This will compile the source code and package it into a WAR file.
+### Build and deploy
 
 ```sh
 mvn clean package
 ```
 
-### 4. Deploy to Tomcat
+This workspace also has a project-local Maven 3.9.16 installation under `.tools/` for machines where Maven is not on `PATH`:
 
-1.  A WAR file named `myproject.war` will be created in the `target/` directory after running `mvn clean package`.
-2.  Copy this `myproject.war` file to the `webapps/` directory of your Tomcat installation.
-3.  Start the Tomcat server (if not already running).
-4.  Tomcat will automatically deploy the WAR file.
-5.  The application will be accessible at `http://localhost:8080/myproject`.
+```powershell
+.\.tools\apache-maven-3.9.16\bin\mvn.cmd clean package
+```
 
-**Note:** The context root `/myproject` is defined in `web/META-INF/context.xml`, so the application will always be accessible at this URL regardless of the WAR file name.
+The `.tools/` directory and local `.m2/` dependency cache are ignored by Git.
 
-## Security
+Deploy `target/myproject.war` to Tomcat 10.x. The application is intended to be available at:
 
-This application uses Servlet-container managed security configured in `web.xml`.
+```text
+http://localhost:8080/myproject/
+```
 
-*   **Authentication Method:** Form-based authentication.
-*   **Security Roles:** Defines access control for different parts of the application (e.g., user-specific pages, admin dashboard).
+### Demo accounts
 
-## Default Admin Login
+| Username | Password | Access |
+| --- | --- | --- |
+| `admin@gamestore.com` | `admin123` | Administrator |
+| `maya.chen` | `gamer123` | Customer |
+| `alex.rivera` | `gamer123` | Customer |
+| `noah.wilson` | `gamer123` | Customer |
 
-*   **Username:** `admin@gamestore.com`
-*   **Password:** `admin123`
+These are intentionally simple seed credentials for a local legacy demo. Do not reuse them in a real deployment; the original application’s plain-text password convention is preserved only to avoid introducing a new authentication stack.
+
+## Notes for maintenance
+
+- The DAO uses SQLite-compatible SQL. Search is implemented with `LOWER(...) LIKE ...`, not PostgreSQL-specific `ILIKE`.
+- Database dates are stored as ISO `YYYY-MM-DD`. The model exposes `dd/MM/yyyy` for the catalog and a separate ISO value for HTML date inputs.
+- Admin checks remain in the servlets because this project uses application-managed sessions rather than container-managed authentication.
+- External Steam CDN image URLs are seed content, not application uploads. If an image moves, update the matching row in `GameStore_sqlite.sql` or through the admin editor.

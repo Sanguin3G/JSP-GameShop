@@ -1,103 +1,28 @@
-
-<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
-<!DOCTYPE html>
+<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<!doctype html>
 <html lang="en">
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>Edit Game</title>
-        <!-- Page-specific stylesheet removed: using common.css globally -->
-        <jsp:include page="common/header.jsp" />
-    </head>
+    <head><jsp:include page="common/header.jsp" /><title>Edit game | GameShop</title></head>
     <body>
-        <div class="page-wrapper bg-gra-03 p-t-45 p-b-50">
-            <div class="wrapper wrapper--w790">
-                <div class="card-component">
-                    <div class="card-component__heading">
-                        <h2 class="title">Edit a game</h2>
-                    </div>
-                    <div class="card-component__body">
-                        <c:set var="p" value="${requestScope.product}"/>
-                        <form action="${pageContext.request.contextPath}/update" method="post">
-                            <div class="form-row">
-                                <div class="form-row__name">ID</div>
-                                <div class="form-row__value">
-                                    <div class="input-group">
-                                        <input class="input--style-5" type="text" name="id" readonly value="${p.id}">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-row__name">Name</div>
-                                <div class="form-row__value">
-                                    <div class="input-group">
-                                        <input class="input--style-5" type="text" name="name" value="${p.name}" required>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-row__name">Image</div>
-                                <div class="form-row__value">
-                                    <div class="input-group">
-                                        <input class="input--style-5" type="text" name="image" value="${p.image}" required>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-row__name">Price</div>
-                                <div class="form-row__value">
-                                    <div class="input-group">
-                                        <input class="input--style-5" type="number" step="0.01" name="price" value="${p.price}" required>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-row__name">Description</div>
-                                <div class="form-row__value">
-                                    <div class="input-group">
-                                        <input class="input--style-5" type="text" name="description" value="${p.description}" required>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-row__name">ReleaseDate</div>
-                                <div class="form-row__value">
-                                    <div class="input-group">
-                                        <input class="input--style-5" type="date" name="releasedate" value="${p.releasedate}" required>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-row__name">Rating</div>
-                                <div class="form-row__value">
-                                    <div class="input-group">
-                                        <input class="input--style-5" type="number" step="0.1" min="0" max="5" name="rating" value="${p.rating}" required>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-row__name">Category</div>
-                                <div class="form-row__value">
-                                    <div class="input-group">
-                                        <div class="rs-select2 js-select-simple select--no-search">
-                                            <select name="cid" required>
-                                                <c:forEach items="${requestScope.categories}" var="c">
-                                                    <option <c:if test="${p.cat.id == c.id}">selected</c:if> value="${c.id}">${c.name}</option>
-                                                </c:forEach>
-                                            </select>
-                                            <div class="select-dropdown"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <button class="btn btn--radius-2 btn--red" type="submit">Update</button>
-                        </form>
-                        <a href="${pageContext.request.contextPath}/list"><button class="btn btn--radius-2 btn--blue">Back</button></a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <jsp:include page="common/scripts.jsp" />
+        <jsp:include page="menu.jsp" />
+        <main class="page-shell container py-5">
+            <div class="row justify-content-center"><div class="col-lg-8"><div class="paper-panel">
+                <div class="eyebrow">Catalog editor</div><h1>Edit game</h1>
+                <c:if test="${not empty requestScope.errorMessage}"><div class="alert alert-danger">${requestScope.errorMessage}</div></c:if>
+                <c:set var="p" value="${requestScope.product}" />
+                <form action="${pageContext.request.contextPath}/update" method="post" class="row g-3">
+                    <input type="hidden" name="id" value="${p.id}">
+                    <div class="col-md-8"><label class="form-label" for="name">Name</label><input id="name" class="form-control" type="text" name="name" value="${p.name}" required></div>
+                    <div class="col-md-4"><label class="form-label" for="price">Price (USD)</label><input id="price" class="form-control" type="number" name="price" min="0" step="0.01" value="${p.price}" required></div>
+                    <div class="col-12"><label class="form-label" for="image">Cover image URL</label><input id="image" class="form-control" type="url" name="image" value="${p.image}" required></div>
+                    <div class="col-md-6"><label class="form-label" for="releasedate">Release date</label><input id="releasedate" class="form-control" type="date" name="releasedate" value="${p.releaseDateInput}" required></div>
+                    <div class="col-md-3"><label class="form-label" for="rating">Rating</label><input id="rating" class="form-control" type="number" name="rating" min="0" max="5" step="0.1" value="${p.rating}" required></div>
+                    <div class="col-md-3"><label class="form-label" for="cid">Category</label><select id="cid" class="form-select" name="cid" required><c:forEach items="${requestScope.categories}" var="c"><option value="${c.id}" ${p.cat.id == c.id ? 'selected' : ''}>${c.name}</option></c:forEach></select></div>
+                    <div class="col-12"><label class="form-label" for="description">Description</label><textarea id="description" class="form-control" name="description" rows="5" required>${p.description}</textarea></div>
+                    <div class="col-12 d-flex gap-2"><button class="btn btn-primary" type="submit">Save changes</button><a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/list">Cancel</a></div>
+                </form>
+            </div></div></div>
+        </main>
+        <jsp:include page="footer.jsp" />
     </body>
 </html>
-

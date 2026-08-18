@@ -1,83 +1,59 @@
-
-
-<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
-<!DOCTYPE html>
+<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+<!doctype html>
 <html lang="en">
     <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>Details</title>
-        <!-- Page-specific stylesheet removed: using common.css globally -->
         <jsp:include page="common/header.jsp" />
+        <title>${requestScope.detail.name} | GameShop</title>
     </head>
     <body>
-        <!-- Navigation-->
-        <jsp:include page="menu.jsp"></jsp:include>
-            <!-- Header-->
-            <header style="background-size: 100% 300px; background-repeat: no-repeat; background-image: url(https://i.imgur.com/9A12u2b.jpg)" class="py-5">
-                <div class="container px-4 px-lg-5 my-5">
-                    <div class="text-center text-white">
-                        <h1 class="display-4 fw-bolder" style="color: white">GameShop™</h1>
-                        <p class="lead fw-normal text-white-50 mb-0">The best video game retailer out there</p>
-                    </div>
-                </div>
-            </header>  
-            <!-- Product section-->
-        <jsp:include page="bar.jsp"></jsp:include>
-            <section style="background-image: url(https://wallpapercave.com/wp/wp7347036.jpg); color: white" class="py-5">
-                <div class="container px-4 px-lg-5 my-5">
-                    <form name="f" action="${pageContext.request.contextPath}/cart" method="post">
-                        <input type="hidden" name="id" value="">
-                        <div class="row gx-4 gx-lg-5 align-items-center">
-                            <div class="col-md-6"><img class="card-img-top mb-5 mb-md-0" src="${p.image}" alt="${p.name}" /></div>
-                        <div class="col-md-6">
-                            <h1 class="display-5 fw-bolder">${p.name}</h1>
-                            <div style="font-weight: bold" class="d-flex big text-warning mb-2">
-                                Rating: ${p.rating}/5<div class="bi-star-fill"></div>
-                            </div>
-                            <div class="fs-5 mb-2">
-                                <span style="font-weight: bold">Price: <c:if test="${p.price != 0}">$${p.price}</c:if><c:if test="${p.price == 0}">Free</c:if></span><br/>
-                                Category: ${p.cat.name}<br/>
-                                Release Date: ${p.releasedate}
-                            </div>
-                            <p class="lead">${p.description}</p>
-                            <div class="d-flex">
-                                <c:if test="${sessionScope.account != null}">
-                                    <button style="width: 7%; margin-right: 2.5%" type="button" class="btn btn-outline-light flex-shrink-0" data-type="minus" data-field="" onClick="decrease()">
-                                        -
-                                    </button>
-                                    <input class="form-control text-center me-3" id="quantity" type="text" name="num" value="1" style="max-width: 3rem"/>
-                                    <button style="width: 7%; margin-right: 2.5%" type="button" class="btn btn-outline-light flex-shrink-0" data-type="plus" data-field="" onClick="increase()">
-                                        +
-                                    </button>
-                                    <input class="btn btn-outline-light flex-shrink-0" type="submit" onclick="cart('${p.id}')" value="Add to Cart"/>
-                                </c:if>
-                            </div>
+        <jsp:include page="menu.jsp" />
+        <main class="page-shell">
+            <jsp:include page="bar.jsp" />
+            <section class="detail-hero">
+                <div class="container">
+                    <div class="row align-items-center g-5">
+                        <div class="col-lg-6">
+                            <img class="detail-image" src="${requestScope.detail.image}" alt="Cover art for ${requestScope.detail.name}">
+                        </div>
+                        <div class="col-lg-6 detail-copy">
+                            <div class="eyebrow">${requestScope.detail.cat.name} · ${requestScope.detail.releasedate}</div>
+                            <h1 class="display-5 fw-bold">${requestScope.detail.name}</h1>
+                            <div class="rating mb-3">★ ${requestScope.detail.rating}/5</div>
+                            <p class="lead">${requestScope.detail.description}</p>
+                            <div class="price mb-4"><fmt:formatNumber value="${requestScope.detail.price}" type="currency" currencySymbol="$" /></div>
+                            <c:choose>
+                                <c:when test="${sessionScope.account != null}">
+                                    <form action="${pageContext.request.contextPath}/cart?pid=${requestScope.detail.id}" method="post" class="d-flex gap-2 align-items-center">
+                                        <label class="visually-hidden" for="quantity">Quantity</label>
+                                        <input id="quantity" name="num" class="form-control" type="number" min="1" max="20" value="1" style="max-width: 90px">
+                                        <button class="btn btn-accent" type="submit">Add to cart</button>
+                                    </form>
+                                </c:when>
+                                <c:otherwise>
+                                    <a class="btn btn-accent" href="${pageContext.request.contextPath}/login.jsp">Sign in to add to cart</a>
+                                </c:otherwise>
+                            </c:choose>
                         </div>
                     </div>
-                </form>
-            </div>
-        </section>
-        <!-- Footer-->
-        <jsp:include page="footer.jsp"></jsp:include>
-        <script type="text/javascript">
-            function decrease() {
-                var quantity = document.getElementById("quantity").value;
-                if(!(quantity < 2)){
-                    quantity--;
-                    document.getElementById("quantity").setAttribute('value', quantity);
-                }
-            }
-            function increase() {
-                var quantity = document.getElementById("quantity").value;
-                quantity++;
-                document.getElementById("quantity").setAttribute('value', quantity);
-            }
-            function cart(id) {
-                document.f.action = "${pageContext.request.contextPath}/cart?pid=" + id;
-                document.f.submit();
-            }
-        </script>
+                </div>
+            </section>
+            <section class="container py-5">
+                <div class="section-heading"><div class="eyebrow">Keep browsing</div><h2>More from this shelf</h2></div>
+                <div class="row g-4">
+                    <c:forEach items="${requestScope.relatedProducts}" var="p">
+                        <div class="col-sm-6 col-lg-3">
+                            <article class="product-card">
+                                <img src="${p.image}" alt="Cover art for ${p.name}" loading="lazy">
+                                <div class="card-body"><h5>${p.name}</h5><div class="rating">★ ${p.rating}/5</div></div>
+                                <div class="card-footer p-3 pt-0"><a class="btn btn-outline-primary w-100" href="${pageContext.request.contextPath}/detail?pid=${p.id}">View details</a></div>
+                            </article>
+                        </div>
+                    </c:forEach>
+                </div>
+            </section>
+        </main>
+        <jsp:include page="footer.jsp" />
     </body>
 </html>
-

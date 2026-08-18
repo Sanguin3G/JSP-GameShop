@@ -1,587 +1,394 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package dal;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import model.Account;
 import model.Cart;
 import model.Category;
 import model.Item;
 import model.Product;
 
+/** Data access used by the legacy JSP/Servlet pages. */
 public class DAO extends DBContext {
     private static final Logger LOGGER = Logger.getLogger(DAO.class.getName());
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter DISPLAY_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter INPUT_DATE = DateTimeFormatter.ISO_LOCAL_DATE;
+
+    private static final String PRODUCT_SELECT =
+            "SELECT p.id, p.name, p.image_url, p.price, p.description, "
+            + "p.release_date, p.rating, c.id AS category_id, c.name AS category_name "
+            + "FROM product p INNER JOIN category c ON c.id = p.category_id ";
 
     public List<Category> getAllCategory() {
-        List<Category> list = new ArrayList<>();
-        String sql = "SELECT * FROM category";
-        
-        try (PreparedStatement st = connection.prepareStatement(sql);
-             ResultSet rs = st.executeQuery()) {
-            
-            while (rs.next()) {
-                Category category = new Category(
-                    rs.getInt("id"), 
-                    rs.getString("name")
-                );
-                list.add(category);
+        List<Category> categories = new ArrayList<>();
+        String sql = "SELECT id, name, description, display_order FROM category ORDER BY display_order, name";
+        try (PreparedStatement statement = connection.prepareStatement(sql);
+                ResultSet result = statement.executeQuery()) {
+            while (result.next()) {
+                Category category = new Category(result.getInt("id"), result.getString("name"));
+                category.setDescription(result.getString("description"));
+                category.setDisplayOrder(result.getInt("display_order"));
+                categories.add(category);
             }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error retrieving categories", e);
+        } catch (SQLException ex) {
+            logDatabaseError("retrieving categories", ex);
         }
-        
-        return list;
+        return categories;
     }
 
     public List<Product> getAllProduct() {
-        List<Product> list = new ArrayList<>();
-        String sql = "SELECT p.id, p.name, p.image_url, p.price, p.description, " +
-                    "c.id AS category_id, c.name, p.release_date, p.rating " +
-                    "FROM category c INNER JOIN product p ON c.id = p.category_id";
-        
-        try (PreparedStatement st = connection.prepareStatement(sql);
-             ResultSet rs = st.executeQuery()) {
-            
-            while (rs.next()) {
-                Category c = new Category(rs.getInt("category_id"), rs.getString("name"));
-                Product p = new Product(
-                    rs.getInt("id"),
-                    rs.getString("name"),
-                    rs.getString("image_url"),
-                    rs.getDouble("price"),
-                    rs.getString("description"),
-                    formatDate(rs.getDate("release_date")),
-                    rs.getDouble("rating"),
-                    c
-                );
-                list.add(p);
-            }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error retrieving all products", e);
-        }
-        
-        return list;
+        return queryProducts(PRODUCT_SELECT + "ORDER BY p.id");
     }
-    
+
     public List<Product> getAllProductByTop10() {
-        List<Product> list = new ArrayList<>();
-        String sql = "SELECT p.id, p.name, p.image_url, p.price, p.description, " +
-                    "c.id AS category_id, c.name, p.release_date, p.rating " +
-                    "FROM category c INNER JOIN product p ON c.id = p.category_id " +
-                    "ORDER BY p.price DESC LIMIT 10";
-        
-        try (PreparedStatement st = connection.prepareStatement(sql);
-             ResultSet rs = st.executeQuery()) {
-            
-            while (rs.next()) {
-                Category c = new Category(rs.getInt("category_id"), rs.getString("name"));
-                Product p = new Product(
-                    rs.getInt("id"),
-                    rs.getString("name"),
-                    rs.getString("image_url"),
-                    rs.getDouble("price"),
-                    rs.getString("description"),
-                    formatDate(rs.getDate("release_date")),
-                    rs.getDouble("rating"),
-                    c
-                );
-                list.add(p);
-            }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error retrieving top 10 products", e);
-        }
-        
-        return list;
+        return queryProducts(PRODUCT_SELECT + "ORDER BY p.price DESC, p.name LIMIT 10");
     }
-    
+
     public List<Product> getAllProductByRating() {
-        List<Product> list = new ArrayList<>();
-        String sql = "SELECT p.id, p.name, p.image_url, p.price, p.description, " +
-                    "c.id AS category_id, c.name, p.release_date, p.rating " +
-                    "FROM category c INNER JOIN product p ON c.id = p.category_id " +
-                    "ORDER BY p.rating DESC LIMIT 10";
-        
-        try (PreparedStatement st = connection.prepareStatement(sql);
-             ResultSet rs = st.executeQuery()) {
-            
-            while (rs.next()) {
-                Category c = new Category(rs.getInt("category_id"), rs.getString("name"));
-                Product p = new Product(
-                    rs.getInt("id"),
-                    rs.getString("name"),
-                    rs.getString("image_url"),
-                    rs.getDouble("price"),
-                    rs.getString("description"),
-                    formatDate(rs.getDate("release_date")),
-                    rs.getDouble("rating"),
-                    c
-                );
-                list.add(p);
-            }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error retrieving products by rating", e);
-        }
-        
-        return list;
+        return queryProducts(PRODUCT_SELECT + "ORDER BY p.rating DESC, p.name LIMIT 10");
     }
 
     public List<Product> getAllProductByCategoryID(int categoryId) {
-        List<Product> list = new ArrayList<>();
-        String sql = "SELECT p.id, p.name, p.image_url, p.price, p.description, " +
-                    "c.id AS category_id, c.name, p.release_date, p.rating " +
-                    "FROM category c INNER JOIN product p ON c.id = p.category_id " +
-                    "WHERE c.id = ?";
-        
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, categoryId);
-            
-            try (ResultSet rs = st.executeQuery()) {
-                while (rs.next()) {
-                    Category c = new Category(rs.getInt("category_id"), rs.getString("name"));
-                    Product p = new Product(
-                        rs.getInt("id"),
-                        rs.getString("name"),
-                        rs.getString("image_url"),
-                        rs.getDouble("price"),
-                        rs.getString("description"),
-                        formatDate(rs.getDate("release_date")),
-                        rs.getDouble("rating"),
-                        c
-                    );
-                    list.add(p);
-                }
-            }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error retrieving products by category ID: " + categoryId, e);
-        }
-        
-        return list;
+        return queryProducts(PRODUCT_SELECT + "WHERE c.id = ? ORDER BY p.name", categoryId);
     }
-    
-    // Overload for backward compatibility
-    public List<Product> getAllProductByCategoryID(String categoryIdStr) {
+
+    public List<Product> getAllProductByCategoryID(String categoryId) {
         try {
-            int categoryId = Integer.parseInt(categoryIdStr);
-            return getAllProductByCategoryID(categoryId);
-        } catch (NumberFormatException e) {
-            LOGGER.log(Level.WARNING, "Invalid category ID format: " + categoryIdStr, e);
+            return getAllProductByCategoryID(Integer.parseInt(categoryId));
+        } catch (NumberFormatException ex) {
+            LOGGER.log(Level.WARNING, "Invalid category ID: {0}", categoryId);
             return new ArrayList<>();
         }
     }
 
     public Product getProductByProductID(int productId) {
-        String sql = "SELECT p.id, p.name, p.image_url, p.price, p.description, " +
-                    "c.id AS category_id, c.name, p.release_date, p.rating " +
-                    "FROM category c INNER JOIN product p ON c.id = p.category_id " +
-                    "WHERE p.id = ?";
-        
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, productId);
-            
-            try (ResultSet rs = st.executeQuery()) {
-                if (rs.next()) {
-                    Category c = new Category(rs.getInt("category_id"), rs.getString("name"));
-                    return new Product(
-                        rs.getInt("id"),
-                        rs.getString("name"),
-                        rs.getString("image_url"),
-                        rs.getDouble("price"),
-                        rs.getString("description"),
-                        formatDate(rs.getDate("release_date")),
-                        rs.getDouble("rating"),
-                        c
-                    );
-                }
-            }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error retrieving product by ID: " + productId, e);
-        }
-        
-        return null;
+        List<Product> products = queryProducts(PRODUCT_SELECT + "WHERE p.id = ?", productId);
+        return products.isEmpty() ? null : products.get(0);
     }
-    
-    // Overload for backward compatibility
-    public Product getProductByProductID(String productIdStr) {
+
+    public Product getProductByProductID(String productId) {
         try {
-            int productId = Integer.parseInt(productIdStr);
-            return getProductByProductID(productId);
-        } catch (NumberFormatException e) {
-            LOGGER.log(Level.WARNING, "Invalid product ID format: " + productIdStr, e);
+            return getProductByProductID(Integer.parseInt(productId));
+        } catch (NumberFormatException ex) {
+            LOGGER.log(Level.WARNING, "Invalid product ID: {0}", productId);
             return null;
         }
     }
 
     public List<Product> getProductBySearchName(String search) {
-        List<Product> list = new ArrayList<>();
-        String sql = "SELECT p.id, p.name, p.image_url, p.price, p.description, " +
-                    "c.id AS category_id, c.name, p.release_date, p.rating " +
-                    "FROM category c INNER JOIN product p ON c.id = p.category_id " +
-                    "WHERE p.name ILIKE ?";
-        
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setString(1, "%" + search + "%");
-            
-            try (ResultSet rs = st.executeQuery()) {
-                while (rs.next()) {
-                    Category c = new Category(rs.getInt("category_id"), rs.getString("name"));
-                    Product p = new Product(
-                        rs.getInt("id"),
-                        rs.getString("name"),
-                        rs.getString("image_url"),
-                        rs.getDouble("price"),
-                        rs.getString("description"),
-                        formatDate(rs.getDate("release_date")),
-                        rs.getDouble("rating"),
-                        c
-                    );
-                    list.add(p);
-                }
-            }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error searching products by name: " + search, e);
-        }
-        
-        return list;
+        String term = search == null ? "" : search.trim();
+        // LOWER + LIKE gives case-insensitive search on SQLite.
+        return queryProducts(PRODUCT_SELECT
+                + "WHERE LOWER(p.name) LIKE LOWER(?) ORDER BY p.name", "%" + term + "%");
     }
 
     public Account login(String username, String password) {
-        String sql = "SELECT * FROM account WHERE username = ? AND pass = ?";
-        
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setString(1, username);
-            st.setString(2, password);
-            
-            try (ResultSet rs = st.executeQuery()) {
-                if (rs.next()) {
-                    return new Account(
-                        rs.getInt("id"),
-                        rs.getString("username"),
-                        rs.getString("pass"),
-                        rs.getInt("role_id") // Updated to match new schema
-                    );
-                }
-            }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error during login attempt for user: " + username, e);
-        }
-        
-        return null;
+        String sql = "SELECT id, username, pass, role_id FROM account WHERE username = ? COLLATE NOCASE AND pass = ?";
+        return findAccount(sql, username, password);
     }
 
     public Account checkUserExist(String username) {
-        String sql = "SELECT * FROM account WHERE username = ?";
-        
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setString(1, username);
-            
-            try (ResultSet rs = st.executeQuery()) {
-                if (rs.next()) {
-                    return new Account(
-                        rs.getInt("id"),
-                        rs.getString("username"),
-                        rs.getString("pass"),
-                        rs.getInt("role_id") // Updated to match new schema
-                    );
-                }
-            }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error checking if user exists: " + username, e);
-        }
-        
-        return null;
+        String sql = "SELECT id, username, pass, role_id FROM account WHERE username = ? COLLATE NOCASE";
+        return findAccount(sql, username);
     }
 
     public void signup(String username, String password) {
-        String sql = "INSERT INTO account (username, pass, role_id) VALUES(?, ?, 2)"; // 2 for regular user role
-        
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setString(1, username);
-            st.setString(2, password);
-            st.executeUpdate();
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error during signup for user: " + username, e);
+        String sql = "INSERT INTO account (username, pass, role_id) VALUES (?, ?, 2)";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, username.trim());
+            statement.setString(2, password);
+            statement.executeUpdate();
+        } catch (SQLException ex) {
+            logDatabaseError("creating account", ex);
+            throw new IllegalStateException("Could not create the account", ex);
         }
     }
 
     public void delete(int productId) {
-        String sql = "DELETE FROM product WHERE id = ?";
-        
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, productId);
-            st.executeUpdate();
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error deleting product with ID: " + productId, e);
-        }
+        executeUpdate("DELETE FROM product WHERE id = ?", productId);
     }
-    
-    // Overload for backward compatibility
-    public void delete(String productIdStr) {
+
+    public void delete(String productId) {
         try {
-            int productId = Integer.parseInt(productIdStr);
-            delete(productId);
-        } catch (NumberFormatException e) {
-            LOGGER.log(Level.WARNING, "Invalid product ID format for deletion: " + productIdStr, e);
+            delete(Integer.parseInt(productId));
+        } catch (NumberFormatException ex) {
+            LOGGER.log(Level.WARNING, "Invalid product ID for deletion: {0}", productId);
         }
     }
 
-    public void insert(String name, String imageUrl, double price, String description, 
-                      int categoryId, String releaseDate, double rating) {
-        String sql = "INSERT INTO product (name, image_url, price, description, category_id, release_date, rating) " +
-                    "VALUES(?, ?, ?, ?, ?, ?, ?)";
-        
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setString(1, name);
-            st.setString(2, imageUrl);
-            st.setDouble(3, price);
-            st.setString(4, description);
-            st.setInt(5, categoryId);
-            st.setDate(6, java.sql.Date.valueOf(parseDate(releaseDate)));
-            st.setDouble(7, rating);
-            st.executeUpdate();
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error inserting product: " + name, e);
+    public void insert(String name, String imageUrl, double price, String description,
+            int categoryId, String releaseDate, double rating) {
+        String sql = "INSERT INTO product (name, image_url, price, description, category_id, release_date, rating) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, name.trim());
+            statement.setString(2, imageUrl.trim());
+            statement.setDouble(3, price);
+            statement.setString(4, description.trim());
+            statement.setInt(5, categoryId);
+            statement.setString(6, parseDate(releaseDate).format(INPUT_DATE));
+            statement.setDouble(7, rating);
+            statement.executeUpdate();
+        } catch (SQLException | RuntimeException ex) {
+            logDatabaseError("inserting product", ex);
+            throw new IllegalStateException("Could not add the product", ex);
         }
     }
 
-    public void update(String name, String imageUrl, double price, String description, 
-                      int categoryId, String releaseDate, double rating, int productId) {
-        String sql = "UPDATE product SET name = ?, image_url = ?, price = ?, description = ?, " +
-                    "category_id = ?, release_date = ?, rating = ? WHERE id = ?";
-        
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setString(1, name);
-            st.setString(2, imageUrl);
-            st.setDouble(3, price);
-            st.setString(4, description);
-            st.setInt(5, categoryId);
-            st.setDate(6, java.sql.Date.valueOf(parseDate(releaseDate)));
-            st.setDouble(7, rating);
-            st.setInt(8, productId);
-            st.executeUpdate();
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error updating product with ID: " + productId, e);
+    public void update(String name, String imageUrl, double price, String description,
+            int categoryId, String releaseDate, double rating, int productId) {
+        String sql = "UPDATE product SET name = ?, image_url = ?, price = ?, description = ?, "
+                + "category_id = ?, release_date = ?, rating = ? WHERE id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, name.trim());
+            statement.setString(2, imageUrl.trim());
+            statement.setDouble(3, price);
+            statement.setString(4, description.trim());
+            statement.setInt(5, categoryId);
+            statement.setString(6, parseDate(releaseDate).format(INPUT_DATE));
+            statement.setDouble(7, rating);
+            statement.setInt(8, productId);
+            statement.executeUpdate();
+        } catch (SQLException | RuntimeException ex) {
+            logDatabaseError("updating product", ex);
+            throw new IllegalStateException("Could not update the product", ex);
         }
     }
-    
-    // Overload for backward compatibility
-    public void update(String name, String imageUrl, float price, String description, 
-                      int categoryId, String releaseDate, float rating, String productIdStr) {
+
+    public void update(String name, String imageUrl, float price, String description,
+            int categoryId, String releaseDate, float rating, String productId) {
         try {
-            int productId = Integer.parseInt(productIdStr);
-            update(name, imageUrl, (double)price, description, categoryId, releaseDate, (double)rating, productId);
-        } catch (NumberFormatException e) {
-            LOGGER.log(Level.WARNING, "Invalid product ID format for update: " + productIdStr, e);
+            update(name, imageUrl, price, description, categoryId, releaseDate, rating,
+                    Integer.parseInt(productId));
+        } catch (NumberFormatException ex) {
+            LOGGER.log(Level.WARNING, "Invalid product ID for update: {0}", productId);
         }
     }
-    
+
     public void updateAccount(String username, String password, int roleId, int accountId) {
         String sql = "UPDATE account SET username = ?, pass = ?, role_id = ? WHERE id = ?";
-        
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setString(1, username);
-            st.setString(2, password);
-            st.setInt(3, roleId);
-            st.setInt(4, accountId);
-            st.executeUpdate();
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error updating account with ID: " + accountId, e);
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, username.trim());
+            statement.setString(2, password);
+            statement.setInt(3, roleId == 1 ? 1 : 2);
+            statement.setInt(4, accountId);
+            statement.executeUpdate();
+        } catch (SQLException ex) {
+            logDatabaseError("updating account", ex);
+            throw new IllegalStateException("Could not update the account", ex);
         }
     }
-    
-    // For backward compatibility
+
     public void updateAcc(String username, String password, int adminLevel, int accountId) {
         updateAccount(username, password, adminLevel, accountId);
     }
 
-    // Get products by page using Java 11 streams
-    public List<Product> getAllProductByPage(List<Product> list, int start, int end) {
-        return list.stream()
-                   .skip(start)
-                   .limit(end - start)
-                   .collect(Collectors.toList());
-    }
-
     public void addOrder(Account account, Cart cart) {
+        if (account == null || cart == null || cart.getItems().isEmpty()) {
+            throw new IllegalArgumentException("An order needs an account and at least one item");
+        }
+
+        boolean autoCommit = true;
         try {
-            // Insert into orders table
-            String sql = "INSERT INTO orders (account_id, total_amount) VALUES (?, ?)";
-            PreparedStatement st = connection.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
-            st.setInt(1, account.getId());
-            st.setDouble(2, cart.getTotalMoney());
-            st.executeUpdate();
-            
-            // Get the generated order ID
-            ResultSet rs = st.getGeneratedKeys();
-            if (rs.next()) {
-                int orderId = rs.getInt(1);
-                
-                // Insert into order_item table
-                for (Item item : cart.getItems()) {
-                    String sql2 = "INSERT INTO order_item (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)";
-                    PreparedStatement st2 = connection.prepareStatement(sql2);
-                    st2.setInt(1, orderId);
-                    st2.setInt(2, item.getProduct().getId());
-                    st2.setInt(3, item.getQuantity());
-                    st2.setDouble(4, item.getPrice());
-                    st2.executeUpdate();
-                    st2.close();
+            autoCommit = connection.getAutoCommit();
+            connection.setAutoCommit(false);
+
+            int orderId;
+            String orderSql = "INSERT INTO orders (account_id, total_amount) VALUES (?, ?)";
+            try (PreparedStatement orderStatement = connection.prepareStatement(
+                    orderSql, Statement.RETURN_GENERATED_KEYS)) {
+                orderStatement.setInt(1, account.getId());
+                orderStatement.setDouble(2, cart.getTotalMoney());
+                orderStatement.executeUpdate();
+                try (ResultSet keys = orderStatement.getGeneratedKeys()) {
+                    if (!keys.next()) {
+                        throw new SQLException("SQLite did not return the new order ID");
+                    }
+                    orderId = keys.getInt(1);
                 }
             }
-            rs.close();
-            st.close();
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error adding order for account ID: " + account.getId(), e);
-        }
-    }
-    
-    public List<Account> getAllAccounts() {
-        List<Account> list = new ArrayList<>();
-        String sql = "SELECT * FROM account";
-        
-        try (PreparedStatement st = connection.prepareStatement(sql);
-             ResultSet rs = st.executeQuery()) {
-            
-            while (rs.next()) {
-                Account account = new Account(
-                    rs.getInt("id"),
-                    rs.getString("username"),
-                    rs.getString("pass"),
-                    rs.getInt("role_id") // Updated to match new schema
-                );
-                list.add(account);
+
+            String itemSql = "INSERT INTO order_item (order_id, product_id, quantity, price, subtotal) "
+                    + "VALUES (?, ?, ?, ?, ?)";
+            try (PreparedStatement itemStatement = connection.prepareStatement(itemSql)) {
+                for (Item item : cart.getItems()) {
+                    itemStatement.setInt(1, orderId);
+                    itemStatement.setInt(2, item.getProduct().getId());
+                    itemStatement.setInt(3, item.getQuantity());
+                    itemStatement.setDouble(4, item.getPrice());
+                    itemStatement.setDouble(5, item.getSubtotal());
+                    itemStatement.addBatch();
+                }
+                itemStatement.executeBatch();
             }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error retrieving all accounts", e);
+            connection.commit();
+        } catch (SQLException ex) {
+            try {
+                connection.rollback();
+            } catch (SQLException rollbackException) {
+                ex.addSuppressed(rollbackException);
+            }
+            logDatabaseError("creating order", ex);
+            throw new IllegalStateException("Could not complete the order", ex);
+        } finally {
+            try {
+                connection.setAutoCommit(autoCommit);
+            } catch (SQLException ex) {
+                LOGGER.log(Level.WARNING, "Could not restore database transaction mode", ex);
+            }
         }
-        
-        return list;
     }
-    
-    // For backward compatibility
+
+    public List<Account> getAllAccounts() {
+        return queryAccounts("SELECT id, username, pass, role_id FROM account ORDER BY id");
+    }
+
     public List<Account> getAllAccount() {
         return getAllAccounts();
     }
-    
+
     public Account getAccountById(int accountId) {
-        String sql = "SELECT * FROM account WHERE id = ?";
-        
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, accountId);
-            
-            try (ResultSet rs = st.executeQuery()) {
-                if (rs.next()) {
-                    return new Account(
-                        rs.getInt("id"),
-                        rs.getString("username"),
-                        rs.getString("pass"),
-                        rs.getInt("role_id") // Updated to match new schema
-                    );
-                }
-            }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error retrieving account by ID: " + accountId, e);
-        }
-        
-        return null;
+        List<Account> accounts = queryAccounts("SELECT id, username, pass, role_id FROM account WHERE id = ?", accountId);
+        return accounts.isEmpty() ? null : accounts.get(0);
     }
-    
-    // For backward compatibility
-    public Account getAllAccountById(String accountIdStr) {
+
+    public Account getAllAccountById(String accountId) {
         try {
-            int accountId = Integer.parseInt(accountIdStr);
-            return getAccountById(accountId);
-        } catch (NumberFormatException e) {
-            LOGGER.log(Level.WARNING, "Invalid account ID format: " + accountIdStr, e);
+            return getAccountById(Integer.parseInt(accountId));
+        } catch (NumberFormatException ex) {
+            LOGGER.log(Level.WARNING, "Invalid account ID: {0}", accountId);
             return null;
         }
     }
-    
+
     public List<Account> getNonAdminAccounts() {
-        List<Account> list = new ArrayList<>();
-        String sql = "SELECT * FROM account WHERE role_id != 1"; // 1 is admin role
-        
-        try (PreparedStatement st = connection.prepareStatement(sql);
-             ResultSet rs = st.executeQuery()) {
-            
-            while (rs.next()) {
-                Account account = new Account(
-                    rs.getInt("id"),
-                    rs.getString("username"),
-                    rs.getString("pass"),
-                    rs.getInt("role_id")
-                );
-                list.add(account);
-            }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error retrieving non-admin accounts", e);
-        }
-        
-        return list;
+        return queryAccounts("SELECT id, username, pass, role_id FROM account WHERE role_id != 1 ORDER BY id");
     }
-    
-    // For backward compatibility
+
     public List<Account> getAllAccountNotAdmin() {
         return getNonAdminAccounts();
     }
-    
+
     public void removeAccount(int accountId) {
-        String sql = "DELETE FROM account WHERE id = ?";
-        
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, accountId);
-            st.executeUpdate();
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error removing account with ID: " + accountId, e);
-        }
+        executeUpdate("DELETE FROM account WHERE id = ?", accountId);
     }
-    
-    // For backward compatibility
-    public void remove(String accountIdStr) {
+
+    public void remove(String accountId) {
         try {
-            int accountId = Integer.parseInt(accountIdStr);
-            removeAccount(accountId);
-        } catch (NumberFormatException e) {
-            LOGGER.log(Level.WARNING, "Invalid account ID format for removal: " + accountIdStr, e);
+            removeAccount(Integer.parseInt(accountId));
+        } catch (NumberFormatException ex) {
+            LOGGER.log(Level.WARNING, "Invalid account ID for removal: {0}", accountId);
         }
     }
-    
-    public List<Account> getAllAccountByPage(List<Account> list, int start, int end) {
-        return list.stream()
-                  .skip(start)
-                  .limit(end - start)
-                  .collect(Collectors.toList());
-    }
-    
-    // Helper method to format java.sql.Date to string
-    private String formatDate(java.sql.Date date) {
-        if (date == null) return "";
-        return date.toLocalDate().format(DATE_FORMATTER);
-    }
-    
-    // Helper method to parse string date to LocalDate
-    private LocalDate parseDate(String dateStr) {
-        if (dateStr == null || dateStr.isEmpty()) {
-            return LocalDate.now();
+
+    public List<Product> getAllProductByPage(List<Product> products, int start, int end) {
+        if (products == null || products.isEmpty() || start >= products.size() || end <= start) {
+            return new ArrayList<>();
         }
+        int safeStart = Math.max(0, start);
+        int safeEnd = Math.min(products.size(), end);
+        return products.subList(safeStart, safeEnd);
+    }
+
+    public List<Account> getAllAccountByPage(List<Account> accounts, int start, int end) {
+        if (accounts == null || accounts.isEmpty() || start >= accounts.size() || end <= start) {
+            return new ArrayList<>();
+        }
+        int safeStart = Math.max(0, start);
+        int safeEnd = Math.min(accounts.size(), end);
+        return accounts.subList(safeStart, safeEnd);
+    }
+
+    private List<Product> queryProducts(String sql, Object... parameters) {
+        List<Product> products = new ArrayList<>();
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            bind(statement, parameters);
+            try (ResultSet result = statement.executeQuery()) {
+                while (result.next()) {
+                    products.add(mapProduct(result));
+                }
+            }
+        } catch (SQLException ex) {
+            logDatabaseError("retrieving products", ex);
+        }
+        return products;
+    }
+
+    private Product mapProduct(ResultSet result) throws SQLException {
+        Category category = new Category(result.getInt("category_id"), result.getString("category_name"));
+        String releaseDate = result.getString("release_date");
+        return new Product(result.getInt("id"), result.getString("name"),
+                result.getString("image_url"), result.getDouble("price"),
+                result.getString("description"), formatDate(releaseDate),
+                result.getDouble("rating"), category);
+    }
+
+    private Account findAccount(String sql, Object... parameters) {
+        List<Account> accounts = queryAccounts(sql, parameters);
+        return accounts.isEmpty() ? null : accounts.get(0);
+    }
+
+    private List<Account> queryAccounts(String sql, Object... parameters) {
+        List<Account> accounts = new ArrayList<>();
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            bind(statement, parameters);
+            try (ResultSet result = statement.executeQuery()) {
+                while (result.next()) {
+                    accounts.add(new Account(result.getInt("id"), result.getString("username"),
+                            result.getString("pass"), result.getInt("role_id")));
+                }
+            }
+        } catch (SQLException ex) {
+            logDatabaseError("retrieving accounts", ex);
+        }
+        return accounts;
+    }
+
+    private void executeUpdate(String sql, int id) {
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            statement.executeUpdate();
+        } catch (SQLException ex) {
+            logDatabaseError("updating database", ex);
+            throw new IllegalStateException("Could not update the database", ex);
+        }
+    }
+
+    private void bind(PreparedStatement statement, Object... parameters) throws SQLException {
+        for (int i = 0; i < parameters.length; i++) {
+            statement.setObject(i + 1, parameters[i]);
+        }
+    }
+
+    private LocalDate parseDate(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalArgumentException("Release date is required");
+        }
+        String date = value.trim();
         try {
-            return LocalDate.parse(dateStr, DATE_FORMATTER);
-        } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Error parsing date: " + dateStr, e);
-            return LocalDate.now();
+            return LocalDate.parse(date, INPUT_DATE);
+        } catch (Exception ignored) {
+            return LocalDate.parse(date, DISPLAY_DATE);
         }
+    }
+
+    private String formatDate(String value) {
+        try {
+            return LocalDate.parse(value, INPUT_DATE).format(DISPLAY_DATE);
+        } catch (Exception ex) {
+            return value == null ? "" : value;
+        }
+    }
+
+    private void logDatabaseError(String action, Exception ex) {
+        LOGGER.log(Level.SEVERE, "Error " + action, ex);
     }
 }
-

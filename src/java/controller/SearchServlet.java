@@ -46,6 +46,10 @@ public class SearchServlet extends HttpServlet {
         request.setCharacterEncoding("utf-8");
         
         String searchTerm = request.getParameter("search");
+        if (searchTerm == null) {
+            // Keep old bookmarks/forms working while the navigation uses `search`.
+            searchTerm = request.getParameter("keyword");
+        }
         
         // Validate search term
         if (searchTerm == null) {
@@ -55,6 +59,10 @@ public class SearchServlet extends HttpServlet {
         
         // Trim and sanitize search term
         searchTerm = searchTerm.trim();
+        if (searchTerm.isEmpty()) {
+            response.sendRedirect(HOME_SERVLET);
+            return;
+        }
         
         try (DAO dao = new DAO()) {
             // Get search results
@@ -82,9 +90,7 @@ public class SearchServlet extends HttpServlet {
             int totalProducts = searchResults.size();
             int totalPages = (totalProducts + productsPerPage - 1) / productsPerPage;
             
-            if (page > totalPages && totalPages > 0) {
-                page = totalPages;
-            }
+            page = HomeServlet.safePage(pageParam, totalPages);
             
             int start = (page - 1) * productsPerPage;
             int end = Math.min(page * productsPerPage, totalProducts);
@@ -98,9 +104,6 @@ public class SearchServlet extends HttpServlet {
             request.setAttribute("page", page);
             request.setAttribute("totalPages", totalPages);
             request.setAttribute("totalResults", totalProducts);
-            
-            // Set CSS file for the page
-            request.setAttribute("cssfile", "home.css");
             
             // Log search query
             LOGGER.log(Level.INFO, "Search query: \"{0}\", found {1} results", 

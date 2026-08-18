@@ -82,9 +82,6 @@ public class DetailServlet extends HttpServlet {
             request.setAttribute("categories", categories);
             request.setAttribute("relatedProducts", relatedProducts);
             
-            // Set CSS file for the page
-            request.setAttribute("cssfile", "detail.css");
-            
             // Forward to detail page
             request.getRequestDispatcher(DETAIL_JSP).forward(request, response);
             

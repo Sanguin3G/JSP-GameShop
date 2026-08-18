@@ -7,15 +7,13 @@
         <title>Server Error</title>
         <jsp:include page="../common/header.jsp" />
     </head>
-    <body style="background-color: #0d0c0c">
-        <div class="container mt-5 text-center">
-            <div class="card p-5 bg-dark text-light">
+    <body>
+        <main class="page-shell container py-5"><div class="paper-panel text-center">
                 <h1 class="display-1">500</h1>
                 <h2>Internal Server Error</h2>
                 <p class="lead">Sorry, something went wrong on our end.</p>
-                <a href="${pageContext.request.contextPath}/home" class="btn btn-outline-light mt-3">Return to Home</a>
-            </div>
-        </div>
+                <a href="${pageContext.request.contextPath}/home" class="btn btn-primary mt-3">Return to Home</a>
+        </div></main>
         <jsp:include page="../common/scripts.jsp" />
     </body>
-</html> 
+</html>

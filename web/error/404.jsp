@@ -7,15 +7,13 @@
         <title>Page Not Found</title>
         <jsp:include page="../common/header.jsp" />
     </head>
-    <body style="background-color: #0d0c0c">
-        <div class="container mt-5 text-center">
-            <div class="card p-5 bg-dark text-light">
+    <body>
+        <main class="page-shell container py-5"><div class="paper-panel text-center">
                 <h1 class="display-1">404</h1>
                 <h2>Page Not Found</h2>
                 <p class="lead">The page you are looking for does not exist.</p>
-                <a href="${pageContext.request.contextPath}/home" class="btn btn-outline-light mt-3">Return to Home</a>
-            </div>
-        </div>
+                <a href="${pageContext.request.contextPath}/home" class="btn btn-primary mt-3">Return to Home</a>
+        </div></main>
         <jsp:include page="../common/scripts.jsp" />
     </body>
-</html> 
+</html>

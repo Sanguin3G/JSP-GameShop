@@ -1,63 +1,14 @@
-
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>About</title>
-        <jsp:include page="common/header.jsp" />
-        <!-- Page-specific stylesheet removed: using common.css globally -->
-    </head>
-    <body style="background-color: #0d0c0c">
-        <jsp:include page="menu.jsp"></jsp:include>
-            <header style="background-size: 100% 300px; background-repeat: no-repeat; background-image: url(https://img.freepik.com/premium-vector/modern-colorful-orange-wide-banner-background-abstract-background-banner-design-web-banner-texture-header-website-vector-abstract-graphic-design-banner-pattern-background-template_181182-17976.jpg)" class="py-5">
-                <div class="container px-4 px-lg-5 my-5">
-                    <div class="text-center text-white">
-                        <h1 class="display-4 fw-bolder" style="color: white">GameShop™</h1>
-                        <p class="lead fw-normal text-white-50 mb-0">Never Gonna Give Game Up.</p>
-                    </div>
-                </div>
-            </header>  
-            <section class="py-5">
-                <div class="container">
-                    <div style="color: white" class="row">
-                        <div class="col-md-5">
-                            <img src="https://wallpapercave.com/wp/wp8830728.jpg" width="100%" alt="Game image">
-                        </div>
-                        <div class="col-md-7 py-5 wrap-about pb-md-5">
-                            <div class="heading-section-bold mb-4 mt-md-5">
-                                <div class="ml-md-0">
-                                    <h2 class="mb-4 text-center">Instant Access</h2>
-                                </div>
-                            </div>
-                            <div class="pb-md-5">
-                                <p>Early access to upcoming titles. Enjoy exclusive deals, regular game updates, and other great benefits. Discover, play, and get in touch with games as they evolve. Be the first to see what's coming and become a part of the ever-changing gaming world.</p>
-                                <p class="text-center"><a href="${pageContext.request.contextPath}/home" class="btn btn-dark">Shop now</a></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            <section class="py-5">
-                <div class="container">
-                    <div style="color: white" class="row">
-                        <div class="col-md-7 py-5 wrap-about pb-md-5">
-                            <div class="heading-section-bold mb-4 mt-md-5">
-                                <div class="ml-md-0">
-                                    <h2 class="mb-4 text-center">Hardware Compatibility</h2>
-                                </div>
-                            </div>
-                            <div class="pb-md-5">
-                                <p>GameShop™ encourages game developers to include in-depth console support and accessibility in their products including PlayStation, Xbox, Nintendo, Steam Deck and VR.</p>
-                            </div>
-                        </div>
-                        <div class="col-md-5">
-                            <img src="https://store.akamai.steamstatic.com/public/images/valveindex/kit_social_media.jpg" width="100%" alt="VR hardware">
-                        </div>
-                    </div>
-                </div>
-            </section>
-        <jsp:include page="footer.jsp"></jsp:include>
+<!doctype html>
+<html lang="en">
+    <head><jsp:include page="common/header.jsp" /><title>About GameShop</title></head>
+    <body>
+        <jsp:include page="menu.jsp" />
+        <main class="page-shell">
+            <section class="hero"><div class="container"><div class="eyebrow">A small shop with good taste</div><h1 class="display-5">GameShop is here to make browsing feel like browsing.</h1><p>We keep the catalog focused, the descriptions useful, and the shelves free of the digital equivalent of a junk drawer.</p></div></section>
+            <section class="container py-5"><div class="row g-4"><div class="col-md-4"><div class="paper-panel h-100"><div class="eyebrow">01</div><h2>Discover</h2><p class="text-secondary">Search by name or browse categories when you know the mood but not the title.</p></div></div><div class="col-md-4"><div class="paper-panel h-100"><div class="eyebrow">02</div><h2>Choose</h2><p class="text-secondary">Every game gets a clear image, a useful summary, a release date, and a rating.</p></div></div><div class="col-md-4"><div class="paper-panel h-100"><div class="eyebrow">03</div><h2>Play</h2><p class="text-secondary">Add games to a session cart and place a demo order when your shortlist becomes decisive.</p></div></div></div><div class="text-center mt-5"><a class="btn btn-primary" href="${pageContext.request.contextPath}/home">Browse the catalog</a></div></section>
+        </main>
+        <jsp:include page="footer.jsp" />
     </body>
 </html>
